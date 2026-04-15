@@ -1,2 +1,23 @@
 # tic-tac-toe
-Unbeatable Python Tic-Tac-Toe powered by the Minimax algorithm. This project features a modular OOP design with Human vs. Random and Smart AI modes. Built with a focus on logic-driven development and recursive state evaluation. Challenge an AI that never loses!
+## Key Features
+
+* **Diverse Player Modes:** The system incorporates three distinct player types, including a manual HumanPlayer a RandomComputerPlayer and a highly strategic SmartComputerPlayer
+* **Unbeatable AI:** The implementation of the Minimax algorithm ensures that the computer opponent makes optimal decisions, effectively preventing the human player from winning
+* **Modular Architecture:** By decoupling the game logic from the player mechanics the codebase remains organized and easily extensible
+* **Interactive Console Display:** The game provides a clear text based visual representation of the board that updates dynamically after each move
+
+## Technical Stack
+
+* **Programming Language:** Python
+* **Core Libraries:** math time and random
+* **Algorithmic Foundation:** Minimax Algorithm for decision theory and state space search
+
+## Algorithm Overview: Minimax Logic
+
+The SmartComputerPlayer is designed to achieve a perfect score by evaluating every possible future state of the game. It assigns numerical values to terminal outcomes to guide its decision making process
+
+* **Victory:** $+1$ adjusted by the number of remaining empty squares to prioritize faster wins
+* **Defeat:** $-1$ adjusted to delay potential losses
+* **Draw:** $0$
+
+The algorithm recursively simulates every move to maximize the AI’s advantage while simultaneously minimizing the player's opportunities.
