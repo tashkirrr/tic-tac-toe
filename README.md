@@ -16,8 +16,8 @@ This repository presents a sophisticated Tic Tac Toe game developed in Python ut
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-username/tic-tac-toe-minimax.git
-    cd tic-tac-toe-minimax
+    [git clone https://github.com/tashkirrr/tic-tac-toe.git]
+    cd tic-tac-toe.git
     ```
 
 2.  **Run the game:**
