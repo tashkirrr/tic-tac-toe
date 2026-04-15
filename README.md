@@ -1,4 +1,5 @@
 # tic-tac-toe
+This repository presents a sophisticated Tic Tac Toe game developed in Python utilizing an object oriented approach to facilitate a seamless gaming experience
 ## Key Features
 
 * **Diverse Player Modes:** The system incorporates three distinct player types, including a manual HumanPlayer a RandomComputerPlayer and a highly strategic SmartComputerPlayer
