@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Play a stunning modern Tic-Tac-Toe game with AI opponent, animated effects, and beautiful glassmorphism UI." />
+  <title>Tic-Tac-Toe — Neon Arena</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Animated background -->
+  <div class="bg-canvas" id="bgCanvas"></div>
+  <div class="noise-overlay"></div>
+
+  <!-- Main app -->
+  <div class="app-wrapper">
+
+    <!-- Header -->
+    <header class="header" role="banner">
+      <div class="logo">
+        <span class="logo-x">X</span>
+        <span class="logo-sep">vs</span>
+        <span class="logo-o">O</span>
+      </div>
+      <h1 class="site-title">Neon Arena</h1>
+      <p class="site-subtitle">Tic-Tac-Toe, Reimagined</p>
+    </header>
+
+    <!-- Mode selection screen -->
+    <section class="screen active" id="screenMode" aria-label="Game Mode Selection">
+      <div class="card mode-card">
+        <h2 class="card-title">Choose Your Mode</h2>
+        <div class="mode-buttons">
+          <button class="mode-btn" id="btnPvP" aria-label="Player vs Player">
+            <span class="mode-icon">👥</span>
+            <span class="mode-label">2 Players</span>
+            <span class="mode-desc">Challenge a friend</span>
+          </button>
+          <button class="mode-btn" id="btnPvAI" aria-label="Player vs AI">
+            <span class="mode-icon">🤖</span>
+            <span class="mode-label">vs AI</span>
+            <span class="mode-desc">Beat the machine</span>
+          </button>
+        </div>
+
+        <!-- AI difficulty (hidden until PvAI selected) -->
+        <div class="difficulty-row hidden" id="difficultyRow">
+          <p class="diff-label">AI Difficulty</p>
+          <div class="diff-buttons">
+            <button class="diff-btn active" id="diffEasy" data-diff="easy">Easy</button>
+            <button class="diff-btn" id="diffMedium" data-diff="medium">Medium</button>
+            <button class="diff-btn" id="diffHard" data-diff="hard">Hard</button>
+          </div>
+        </div>
+
+        <button class="primary-btn" id="btnStartGame">Start Game →</button>
+      </div>
+    </section>
+
+    <!-- Game screen -->
+    <section class="screen" id="screenGame" aria-label="Game Area">
+      <!-- Scoreboard -->
+      <div class="scoreboard" role="region" aria-label="Scoreboard">
+        <div class="score-card" id="scoreX">
+          <div class="score-symbol x-color">X</div>
+          <div class="score-name" id="nameX">Player 1</div>
+          <div class="score-value" id="scoreValX">0</div>
+        </div>
+        <div class="score-middle">
+          <div class="draw-count" id="drawCount">0</div>
+          <div class="draw-label">Draws</div>
+          <button class="icon-btn" id="btnMenu" title="Back to Menu" aria-label="Back to Menu">⬅</button>
+        </div>
+        <div class="score-card" id="scoreO">
+          <div class="score-symbol o-color">O</div>
+          <div class="score-name" id="nameO">Player 2</div>
+          <div class="score-value" id="scoreValO">0</div>
+        </div>
+      </div>
+
+      <!-- Status banner -->
+      <div class="status-banner" id="statusBanner" aria-live="polite">
+        <span id="statusText">Player X's turn</span>
+      </div>
+
+      <!-- Game board -->
+      <div class="board-wrapper">
+        <div class="board" id="board" role="grid" aria-label="Tic-Tac-Toe Board">
+          <!-- 9 cells injected by JS -->
+        </div>
+        <!-- Win line overlay -->
+        <svg class="win-line-svg" id="winLineSVG" viewBox="0 0 3 3" preserveAspectRatio="none">
+          <line id="winLine" x1="0" y1="0" x2="0" y2="0" stroke="url(#winGrad)" stroke-width="0.12" stroke-linecap="round" />
+          <defs>
+            <linearGradient id="winGrad" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#a78bfa"/>
+              <stop offset="100%" stop-color="#38bdf8"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="action-row">
+        <button class="secondary-btn" id="btnReset">New Round</button>
+        <button class="secondary-btn danger-btn" id="btnResetScore">Reset Scores</button>
+      </div>
+    </section>
+
+    <!-- Result overlay -->
+    <div class="result-overlay hidden" id="resultOverlay" role="dialog" aria-modal="true" aria-label="Game Result">
+      <div class="result-card">
+        <div class="result-emoji" id="resultEmoji">🎉</div>
+        <h2 class="result-title" id="resultTitle">Player X Wins!</h2>
+        <p class="result-sub" id="resultSub">Brilliant play!</p>
+        <div class="result-actions">
+          <button class="primary-btn" id="btnPlayAgain">Play Again</button>
+          <button class="secondary-btn" id="btnMainMenu">Main Menu</button>
+        </div>
+      </div>
+      <canvas class="confetti-canvas" id="confettiCanvas"></canvas>
+    </div>
+
+  </div>
+
+  <script src="game.js" type="module"></script>
+</body>
+</html>
