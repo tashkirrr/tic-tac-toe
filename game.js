@@ -310,14 +310,21 @@ function resetRound(keepScores = true) {
 }
 
 /* =====================================================================
-   AI — MINIMAX
+   AI — UNBEATABLE MINIMAX ENGINE
+   Depth-weighted scores   → AI always wins/draws as fast as possible
+   Strategic move ordering → center first, then corners, then edges
+   Alpha-beta pruning      → fast even on move 1
    ===================================================================== */
+
+// Strategic cell priority: center > corners > edges
+const MOVE_ORDER = [4, 0, 2, 6, 8, 1, 3, 5, 7];
+
 function scheduleAI() {
   state.aiThinking = true;
-  const delay = state.difficulty === 'easy' ? 400 : state.difficulty === 'medium' ? 600 : 700;
+  const delay = state.difficulty === 'easy' ? 350 : state.difficulty === 'medium' ? 550 : 650;
   setTimeout(() => {
     if (!state.gameOver) {
-      const idx = getAIMove(state.board, state.difficulty);
+      const idx = getAIMove([...state.board], state.difficulty);
       state.aiThinking = false;
       makeMove(idx, 'O');
     }
@@ -325,60 +332,121 @@ function scheduleAI() {
 }
 
 function getAIMove(board, difficulty) {
-  const empty = board.map((v, i) => v === null ? i : -1).filter(i => i !== -1);
+  const empty = MOVE_ORDER.filter(i => board[i] === null);
+
+  // EASY — pure random, always
   if (difficulty === 'easy') {
-    // 70% random
-    if (Math.random() < 0.7) return empty[Math.floor(Math.random() * empty.length)];
+    return empty[Math.floor(Math.random() * empty.length)];
   }
+
+  // MEDIUM — one-step lookahead only: win > block > random
   if (difficulty === 'medium') {
-    // Check win/block, then random
-    const win  = findWinningMove(board, 'O');
-    if (win !== -1) return win;
-    const block = findWinningMove(board, 'X');
+    const win   = findImmediateMove(board, 'O');
+    if (win   !== -1) return win;
+    const block = findImmediateMove(board, 'X');
     if (block !== -1) return block;
-    if (Math.random() < 0.4) return empty[Math.floor(Math.random() * empty.length)];
+    // No win/block available → pick a strategic random cell
+    return empty[Math.floor(Math.random() * empty.length)];
   }
-  // Hard: full minimax
-  return minimax(board, 'O', -Infinity, Infinity).index;
+
+  // HARD — perfect minimax (unbeatable, guaranteed win or draw)
+  return getBestMove(board);
 }
 
-function findWinningMove(board, player) {
-  for (const pattern of WIN_PATTERNS) {
-    const [a, b, c] = pattern;
-    const cells = [board[a], board[b], board[c]];
-    if (cells.filter(v => v === player).length === 2 && cells.includes(null)) {
-      return pattern[cells.indexOf(null)];
+/**
+ * Scans every winning pattern for an immediate win/block opportunity.
+ * Returns the cell index to play, or -1 if none found.
+ */
+function findImmediateMove(board, player) {
+  for (const [a, b, c] of WIN_PATTERNS) {
+    const line = [board[a], board[b], board[c]];
+    const playerCount = line.filter(v => v === player).length;
+    const emptyCount  = line.filter(v => v === null).length;
+    if (playerCount === 2 && emptyCount === 1) {
+      // Return the empty cell in this pattern
+      const emptyPos = [a, b, c][line.indexOf(null)];
+      return emptyPos;
     }
   }
   return -1;
 }
 
-function minimax(board, player, alpha, beta) {
-  const result = checkResult(board);
-  if (result) {
-    if (result.winner === 'O') return { score:  10 };
-    if (result.winner === 'X') return { score: -10 };
-    return { score: 0 };
-  }
+/**
+ * Entry point for Hard AI: iterates top-level moves in strategic order
+ * and picks the one with the highest minimax score.
+ */
+function getBestMove(board) {
+  const candidates = MOVE_ORDER.filter(i => board[i] === null);
+  let bestScore = -Infinity;
+  let bestIndex = candidates[0]; // fallback (should always be overwritten)
 
-  const empty = board.map((v, i) => v === null ? i : -1).filter(i => i !== -1);
-  let bestMove = { score: player === 'O' ? -Infinity : Infinity, index: -1 };
-
-  for (const idx of empty) {
-    board[idx] = player;
-    const score = minimax(board, player === 'O' ? 'X' : 'O', alpha, beta).score;
+  for (const idx of candidates) {
+    board[idx] = 'O';
+    // After AI places O, it's the human's (X) turn → minimising
+    const score = minimaxScore(board, false, 0, -Infinity, Infinity);
     board[idx] = null;
 
-    if (player === 'O') {
-      if (score > bestMove.score) { bestMove = { score, index: idx }; }
-      alpha = Math.max(alpha, score);
-    } else {
-      if (score < bestMove.score) { bestMove = { score, index: idx }; }
-      beta = Math.min(beta, score);
+    if (score > bestScore) {
+      bestScore = score;
+      bestIndex = idx;
+      // Perfect win found — no need to look further
+      if (bestScore === 10) break;
     }
-    if (beta <= alpha) break; // pruning
   }
-  return bestMove;
+  return bestIndex;
+}
+
+/**
+ * Recursive minimax with:
+ *   - Depth weighting: prefer faster wins, resist faster losses
+ *     AI   win  → +10 − depth   (sooner win = higher score)
+ *     Human win → −10 + depth   (sooner loss = lower score)
+ *     Draw      →  0
+ *   - Alpha-beta pruning to skip provably irrelevant branches
+ *   - MOVE_ORDER to evaluate strongest moves first (more pruning)
+ *
+ * @param {Array}   board       - current 9-cell board state
+ * @param {boolean} isMaximising - true when it's AI (O)'s turn
+ * @param {number}  depth       - current recursion depth
+ * @param {number}  alpha       - best score maximiser can guarantee
+ * @param {number}  beta        - best score minimiser can guarantee
+ * @returns {number} heuristic score of this board state
+ */
+function minimaxScore(board, isMaximising, depth, alpha, beta) {
+  const result = checkResult(board);
+
+  // Terminal states — scored relative to depth so AI acts decisively
+  if (result !== null) {
+    if (result.winner === 'O') return 10 - depth;   // AI wins fast
+    if (result.winner === 'X') return depth - 10;   // Resist player wins
+    return 0;                                        // Draw
+  }
+
+  const moves = MOVE_ORDER.filter(i => board[i] === null);
+
+  if (isMaximising) {
+    // AI (O) wants to maximise score
+    let best = -Infinity;
+    for (const idx of moves) {
+      board[idx] = 'O';
+      best = Math.max(best, minimaxScore(board, false, depth + 1, alpha, beta));
+      board[idx] = null;
+      alpha = Math.max(alpha, best);
+      if (beta <= alpha) break; // β-cutoff — minimiser won't allow this
+    }
+    return best;
+  } else {
+    // Human (X) wants to minimise score
+    let best = Infinity;
+    for (const idx of moves) {
+      board[idx] = 'X';
+      best = Math.min(best, minimaxScore(board, true, depth + 1, alpha, beta));
+      board[idx] = null;
+      beta = Math.min(beta, best);
+      if (beta <= alpha) break; // α-cutoff — maximiser won't allow this
+    }
+    return best;
+  }
 }
 
 /* =====================================================================
