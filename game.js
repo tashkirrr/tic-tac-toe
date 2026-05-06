@@ -33,13 +33,14 @@ const QUOTES_DRAW = ['So close! 🤝', 'Perfectly balanced ⚖️', 'Great minds
    STATE
    ===================================================================== */
 const state = {
-  mode:       'pvp',   // 'pvp' | 'pva'
-  difficulty: 'hard',  // 'easy' | 'medium' | 'hard'
-  board:      Array(9).fill(null),
-  current:    'X',
-  scores:     { X: 0, O: 0, draw: 0 },
-  gameOver:   false,
-  aiThinking: false,
+  mode:           'pvp',   // 'pvp' | 'pva'
+  difficulty:     'hard',  // 'easy' | 'medium' | 'hard'
+  board:          Array(9).fill(null),
+  current:        'X',
+  startingPlayer: 'X',    // alternates X→O→X→O each new round
+  scores:         { X: 0, O: 0, draw: 0 },
+  gameOver:       false,
+  aiThinking:     false,
 };
 
 /* =====================================================================
@@ -176,7 +177,14 @@ function updateTurnUI() {
   if (state.mode === 'pva' && state.current === 'O') {
     dom.statusText.innerHTML = 'AI is thinking<span class="thinking-dots"><span></span><span></span><span></span></span>';
   } else {
-    dom.statusText.textContent = `Player ${state.current}'s turn`;
+    // Determine the name to display based on mode and player
+    let playerName;
+    if (state.mode === 'pva') {
+      playerName = state.current === 'X' ? 'Player 1' : 'AI';
+    } else {
+      playerName = state.current === 'X' ? 'Player 1' : 'Player 2';
+    }
+    dom.statusText.textContent = `${playerName}'s turn`;
   }
 }
 
@@ -290,22 +298,36 @@ function hideResult() {
    RESET
    ===================================================================== */
 function resetRound(keepScores = true) {
-  state.board     = Array(9).fill(null);
-  state.current   = 'X';
-  state.gameOver  = false;
+  state.board      = Array(9).fill(null);
+  state.gameOver   = false;
   state.aiThinking = false;
+
+  if (!keepScores) {
+    // Full restart — scores cleared, X always goes first
+    state.scores         = { X: 0, O: 0, draw: 0 };
+    state.startingPlayer = 'X';
+    dom.scoreValX.textContent = '0';
+    dom.scoreValO.textContent = '0';
+    dom.drawCount.textContent = '0';
+  } else {
+    // New round — flip who goes first: X→O→X→O…
+    state.startingPlayer = state.startingPlayer === 'X' ? 'O' : 'X';
+  }
+
+  state.current = state.startingPlayer;
+
   hideResult();
   clearWinLine();
   buildBoard();
   updateTurnUI();
-  dom.scoreCardX.classList.add('active-turn');
-  dom.scoreCardO.classList.remove('active-turn');
 
-  if (!keepScores) {
-    state.scores = { X: 0, O: 0, draw: 0 };
-    dom.scoreValX.textContent = '0';
-    dom.scoreValO.textContent = '0';
-    dom.drawCount.textContent = '0';
+  // Highlight the active-turn score card
+  dom.scoreCardX.classList.toggle('active-turn', state.current === 'X');
+  dom.scoreCardO.classList.toggle('active-turn', state.current === 'O');
+
+  // In PvA mode, if AI (O) is the starting player, fire immediately
+  if (state.mode === 'pva' && state.current === 'O') {
+    scheduleAI();
   }
 }
 
